@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blue Lock Export Assistant - Smart Cost Calculator</title>
+    <meta name="description" content="Professional export cost calculator with real-time currency conversion, comprehensive cost analysis, and intelligent pricing recommendations.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div id="particles-js"></div>
+    <div class="glassmorphism-overlay"></div>
+    
+    <!-- Navigation -->
+    <nav class="modern-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="brand-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <span class="brand-text">Blue Lock Export</span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" id="themeToggle">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <button class="nav-btn" id="helpBtn">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <div class="status-badge">
+                    <i class="fas fa-sparkles"></i>
+                    <span>AI-Powered Cost Analysis</span>
+                </div>
+                <h1 class="hero-title">
+                    Smart Export Cost
+                    <span class="gradient-text">Calculator</span>
+                </h1>
+                <p class="hero-description">
+                    Professional-grade export cost analysis with real-time currency conversion,
+                    comprehensive duty calculations, and intelligent pricing recommendations.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">50+</div>
+                        <div class="stat-label">Currencies</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Updates</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Calculator Interface -->
+        <main class="calculator-main">
+            <!-- Bento Grid Layout -->
+            <div class="bento-grid">
+                <!-- Product Information Card -->
+                <div class="bento-card product-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <h3 class="card-title">Product Information</h3>
+                        <div class="card-status">
+                            <div class="status-dot"></div>
+                            <span>Required</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="input-group">
+                            <label class="modern-label" for="productName">
+                                <i class="fas fa-tag"></i>
+                                Product Name
+                            </label>
+                            <input type="text" id="productName" class="modern-input" placeholder="Enter product name">
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="productCategory">
+                                    <i class="fas fa-layer-group"></i>
+                                    Category
+                                </label>
+                                <input type="text" id="productCategory" class="modern-input" placeholder="Enter product category">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="unitPrice">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    Unit Price
+                                </label>
+                                <div class="input-with-currency">
+                                    <input type="number" id="unitPrice" class="modern-input" placeholder="0.00" step="0.01">
+                                    <select id="unitCurrency" class="currency-select">
+                                        <option value="CNY">CNY</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="NZD">NZD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="modern-label" for="unitsPerContainer">
+                                <i class="fas fa-cubes"></i>
+                                Units per Container
+                            </label>
+                            <input type="number" id="unitsPerContainer" class="modern-input" placeholder="Enter quantity">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping & Logistics Card -->
+                <div class="bento-card shipping-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-ship"></i>
+                        </div>
+                        <h3 class="card-title">Shipping & Logistics</h3>
+                        <div class="card-status">
+                            <div class="status-dot active"></div>
+                            <span>Active</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="input-group">
+                            <label class="modern-label" for="containerType">
+                                <i class="fas fa-shipping-fast"></i>
+                                Container Type
+                            </label>
+                            <select id="containerType" class="modern-select">
+                                <option value="20ft">20ft Standard</option>
+                                <option value="40ft">40ft Standard</option>
+                                <option value="40ft-hc">40ft High Cube</option>
+                                <option value="lcl">LCL (Less than Container Load)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="radio-group">
+                            <label class="radio-label">Incoterms</label>
+                            <div class="radio-options">
+                                <label class="radio-card">
+                                    <input type="radio" name="incoterms" value="FOB" checked>
+                                    <div class="radio-content">
+                                        <div class="radio-title">FOB</div>
+                                        <div class="radio-desc">Free on Board</div>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="incoterms" value="CIF">
+                                    <div class="radio-content">
+                                        <div class="radio-title">CIF</div>
+                                        <div class="radio-desc">Cost, Insurance & Freight</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="shippingCost">
+                                    <i class="fas fa-anchor"></i>
+                                    Container Shipping Cost
+                                </label>
+                                <div class="input-with-currency">
+                                    <input type="number" id="shippingCost" class="modern-input" placeholder="0.00" step="0.01">
+                                    <select id="shippingCurrency" class="currency-select">
+                                        <option value="USD">USD</option>
+                                        <option value="CNY">CNY</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="NZD">NZD</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="localTransport">
+                                    <i class="fas fa-truck"></i>
+                                    Local Transport (China)
+                                </label>
+                                <input type="number" id="localTransport" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="modern-label" for="nzTransport">
+                                <i class="fas fa-route"></i>
+                                NZ Transport & Delivery
+                            </label>
+                            <input type="number" id="nzTransport" class="modern-input" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customs & Duties Card -->
+                <div class="bento-card customs-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <h3 class="card-title">Customs & Duties</h3>
+                        <div class="info-tooltip" data-tooltip="Customs duties and taxes applied by New Zealand customs">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="dutyRate">
+                                    <i class="fas fa-percentage"></i>
+                                    Duty Rate (%)
+                                </label>
+                                <input type="number" id="dutyRate" class="modern-input" placeholder="0.00" step="0.01" value="5.00">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="gstRate">
+                                    <i class="fas fa-receipt"></i>
+                                    GST Rate (%)
+                                </label>
+                                <input type="number" id="gstRate" class="modern-input" placeholder="15.00" step="0.01" value="15.00">
+                            </div>
+                        </div>
+                        
+                        <div class="input-group gst-registration-group">
+                            <label class="modern-label">
+                                <i class="fas fa-building"></i>
+                                GST Registration Status
+                                <i class="fas fa-question-circle help-trigger" title="Hover for more info"></i>
+                            </label>
+                            <div class="toggle-group">
+                                <input type="radio" id="gstRegistered" name="gstStatus" value="registered" checked>
+                                <label for="gstRegistered" class="toggle-option">
+                                    <i class="fas fa-check-circle"></i>
+                                    GST Registered
+                                </label>
+                                <input type="radio" id="gstNotRegistered" name="gstStatus" value="not-registered">
+                                <label for="gstNotRegistered" class="toggle-option">
+                                    <i class="fas fa-times-circle"></i>
+                                    Not GST Registered
+                                </label>
+                            </div>
+                            <div class="help-text">
+                                <i class="fas fa-info-circle"></i>
+                                If GST registered, GST will be shown separately for cash flow but excluded from unit cost calculation
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="customsBrokerage">
+                                    <i class="fas fa-handshake"></i>
+                                    Customs Brokerage
+                                </label>
+                                <input type="number" id="customsBrokerage" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="documentationFees">
+                                    <i class="fas fa-file-alt"></i>
+                                    Documentation Fees
+                                </label>
+                                <input type="number" id="documentationFees" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warehouse & Storage Card -->
+                <div class="bento-card warehouse-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                        <h3 class="card-title">Warehouse & Storage</h3>
+                        <div class="card-badge">Smart Scaling</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-panel">
+                            <div class="info-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="info-text">
+                                <strong>Smart Scaling:</strong> Warehouse costs automatically scale based on inventory turnover rate and storage duration.
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="weeklyWarehouseCost">
+                                    <i class="fas fa-calendar-week"></i>
+                                    Weekly Warehouse Cost
+                                </label>
+                                <input type="number" id="weeklyWarehouseCost" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="weeksToSell">
+                                    <i class="fas fa-clock"></i>
+                                    Weeks to Sell Stock
+                                </label>
+                                <input type="number" id="weeksToSell" class="modern-input" placeholder="4" step="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insurance & Other Costs Card -->
+                <div class="bento-card insurance-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="card-title">Insurance & Other Costs</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="insuranceRate">
+                                    <i class="fas fa-umbrella"></i>
+                                    Insurance Rate (%)
+                                </label>
+                                <input type="number" id="insuranceRate" class="modern-input" placeholder="0.50" step="0.01">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="bankFees">
+                                    <i class="fas fa-university"></i>
+                                    Bank/Transfer Fees
+                                </label>
+                                <input type="number" id="bankFees" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="inspectionFees">
+                                    <i class="fas fa-search"></i>
+                                    Inspection Fees
+                                </label>
+                                <input type="number" id="inspectionFees" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="otherFees">
+                                    <i class="fas fa-plus-circle"></i>
+                                    Other Miscellaneous Fees
+                                </label>
+                                <input type="number" id="otherFees" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exchange Rates Card -->
+                <div class="bento-card exchange-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <h3 class="card-title">Exchange Rates</h3>
+                        <div class="live-indicator">
+                            <div class="pulse-dot"></div>
+                            <span>Live Rates</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="cnyToNzd">
+                                    <i class="fas fa-yen-sign"></i>
+                                    CNY to NZD Rate
+                                </label>
+                                <input type="number" id="cnyToNzd" class="modern-input" placeholder="0.2200" step="0.0001">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="usdToNzd">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    USD to NZD Rate
+                                </label>
+                                <input type="number" id="usdToNzd" class="modern-input" placeholder="1.6500" step="0.0001">
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="modern-label" for="exchangeMargin">
+                                <i class="fas fa-chart-line"></i>
+                                Exchange Rate Margin (%)
+                            </label>
+                            <input type="number" id="exchangeMargin" class="modern-input" placeholder="2.00" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Calculator Card -->
+                <div class="bento-card pricing-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3 class="card-title">Margin & Pricing</h3>
+                        <div class="card-status">
+                            <div class="status-dot success"></div>
+                            <span>Ready</span>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="result-display">
+                            <div class="result-item">
+                                <label class="result-label">Total Cost per Unit (NZD)</label>
+                                <div class="result-value" id="totalCostPerUnit">$0.00</div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label class="modern-label" for="marginPercentage">
+                                    <i class="fas fa-percentage"></i>
+                                    Margin Percentage (%)
+                                </label>
+                                <input type="number" id="marginPercentage" class="modern-input" placeholder="30.00" step="0.01">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label class="modern-label" for="sellingPrice">
+                                    <i class="fas fa-tag"></i>
+                                    Selling Price (NZD)
+                                </label>
+                                <input type="number" id="sellingPrice" class="modern-input" placeholder="0.00" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="result-display">
+                            <div class="result-item">
+                                <label class="result-label">Profit per Unit (NZD)</label>
+                                <div class="result-value profit" id="profitPerUnit">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Panel -->
+                <div class="bento-card action-card">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h3 class="card-title">Actions</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="action-buttons">
+                            <button class="primary-btn" id="calculateBtn">
+                                <i class="fas fa-calculator"></i>
+                                <span>Calculate Costs</span>
+                            </button>
+                            
+                            <div class="button-row">
+                                <button class="secondary-btn" id="saveBtn">
+                                    <i class="fas fa-save"></i>
+                                    <span>Save</span>
+                                </button>
+                                
+                                <button class="secondary-btn" id="loadBtn">
+                                    <i class="fas fa-folder-open"></i>
+                                    <span>Load</span>
+                                </button>
+                                
+                                <button class="secondary-btn" id="clearBtn">
+                                    <i class="fas fa-trash"></i>
+                                    <span>Clear</span>
+                                </button>
+                                
+                                <button class="secondary-btn" id="exportBtn">
+                                    <i class="fas fa-download"></i>
+                                    <span>Export</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <h2 class="results-title">Cost Analysis Results</h2>
+                    <div class="results-actions">
+                        <button class="icon-btn" id="refreshResults">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="icon-btn" id="shareResults">
+                            <i class="fas fa-share"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="results-grid" id="resultsGrid">
+                    <!-- Results will be populated here -->
+                </div>
+                
+                <div class="results-content" id="results-content">
+                    <div class="placeholder">Calculate costs to see results here</div>
+                </div>
+            </section>
+
+            <!-- Saved Calculations -->
+            <section class="saved-section">
+                <div class="section-header">
+                    <h2 class="section-title">Saved Calculations</h2>
+                    <div class="section-actions">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search calculations..." id="searchCalculations">
+                        </div>
+                        <select class="filter-select" id="filterCalculations">
+                            <option value="all">All Calculations</option>
+                            <option value="recent">Recent</option>
+                            <option value="favorites">Favorites</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="saved-list" id="savedList">
+                    <!-- Saved calculations will be populated here -->
+                </div>
+                
+                <div class="saved-calculations-card" id="savedCalculationsCard" style="display: none;">
+                    <div class="card-header">
+                        <h3>Saved Calculations</h3>
+                        <button class="close-btn" onclick="document.getElementById('savedCalculationsCard').style.display = 'none';">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="card-content">
+                        <div class="filter-section">
+                            <select id="categoryFilter" onchange="filterCalculations()">
+                                <option value="all">All Categories</option>
+                            </select>
+                        </div>
+                        <div class="calculations-list" id="calculationsList">
+                            <!-- Saved calculations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="modern-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="brand-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="brand-info">
+                    <h3>Blue Lock Export Assistant</h3>
+                    <p>Professional export cost calculation made simple</p>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <div class="link-group">
+                    <h4>Features</h4>
+                    <a href="#">Cost Calculator</a>
+                    <a href="#">Currency Converter</a>
+                    <a href="#">Duty Calculator</a>
+                    <a href="#">Margin Analysis</a>
+                </div>
+                
+                <div class="link-group">
+                    <h4>Resources</h4>
+                    <a href="#">User Guide</a>
+                    <a href="#">API Documentation</a>
+                    <a href="#">Support</a>
+                    <a href="#">FAQ</a>
+                </div>
+                
+                <div class="link-group">
+                    <h4>Connect</h4>
+                    <a href="#">Contact Us</a>
+                    <a href="#">Feedback</a>
+                    <a href="#">Updates</a>
+                    <a href="#">Community</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="footer-container">
+                <p>&copy; 2025 Blue Lock Export Assistant. All rights reserved.</p>
+                <div class="footer-meta">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+    
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>
