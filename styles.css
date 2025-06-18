@@ -99,6 +99,11 @@
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     
+    /* Profit margin colors */
+    --profit-low: #ef4444;
+    --profit-good: #f59e0b;
+    --profit-excellent: #10b981;
+    
     /* Spacing */
     --space-1: 0.25rem;
     --space-2: 0.5rem;
@@ -1862,4 +1867,54 @@ body::before {
         break-inside: avoid;
         page-break-inside: avoid;
     }
+}
+
+/* Profit Margin Visual Feedback */
+.result-value.profit {
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.result-value.profit.profit-low {
+    color: var(--profit-low);
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.result-value.profit.profit-good {
+    color: var(--profit-good);
+    text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.result-value.profit.profit-excellent {
+    color: var(--profit-excellent);
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+/* Margin Calculator Enhancements */
+.pricing-card .result-display {
+    margin: 1rem 0;
+}
+
+.pricing-card .result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.pricing-card .result-label {
+    font-size: 0.875rem;
+    color: var(--neutral-400);
+    font-weight: 500;
+}
+
+.pricing-card .result-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-400);
+    font-family: var(--font-mono);
 }
