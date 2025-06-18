@@ -1,16 +1,28 @@
 // Exchange rate fetching and cost calculation functions
 
+console.log('DEBUG: Script file loaded, defining ExportCostCalculator class');
+
 class ExportCostCalculator {
     constructor() {
+        console.log('DEBUG: ExportCostCalculator constructor started');
+        
         this.exchangeRates = {
             CNY_TO_NZD: 0.2250,
             USD_TO_NZD: 1.6500
         };
+        
+        console.log('DEBUG: About to initialize event listeners');
         this.initializeEventListeners();
+        console.log('DEBUG: Event listeners initialized');
+        
+        console.log('DEBUG: About to load default rates');
         this.loadDefaultRates();
+        console.log('DEBUG: Constructor completed');
     }
 
     initializeEventListeners() {
+        console.log('DEBUG: initializeEventListeners method started');
+        
         // Auto-calculate when exchange rates change
         document.getElementById('cnyToNzd').addEventListener('input', () => {
             this.exchangeRates.CNY_TO_NZD = parseFloat(document.getElementById('cnyToNzd').value) || 0.2250;
@@ -19,9 +31,11 @@ class ExportCostCalculator {
         document.getElementById('usdToNzd').addEventListener('input', () => {
             this.exchangeRates.USD_TO_NZD = parseFloat(document.getElementById('usdToNzd').value) || 1.6500;
         });
+        console.log('DEBUG: Exchange rate listeners added');
 
         // Auto-update container capacity when type changes
         document.getElementById('containerType').addEventListener('change', this.updateContainerInfo.bind(this));
+        console.log('DEBUG: Container type listener added');
         
         // Auto-recalculate when incoterms change
         document.querySelectorAll('input[name="incoterms"]').forEach(radio => {
@@ -34,9 +48,17 @@ class ExportCostCalculator {
                 }
             });
         });
+        console.log('DEBUG: Incoterms listeners added');
+        
+        // Margin and pricing calculator event listeners
+        console.log('DEBUG: About to initialize margin calculator listeners');
+        this.initializeMarginCalculatorListeners();
+        console.log('DEBUG: Margin calculator listeners should be initialized');
         
         // Initialize container info
+        console.log('DEBUG: About to update container info');
         this.updateContainerInfo();
+        console.log('DEBUG: initializeEventListeners method completed');
     }
 
     loadDefaultRates() {
@@ -475,16 +497,113 @@ class ExportCostCalculator {
         `;
     }
 
+    initializeMarginCalculatorListeners() {
+        const marginInput = document.getElementById('marginPercentage');
+        const sellingPriceInput = document.getElementById('sellingPrice');
+        const profitDisplay = document.getElementById('profitPerUnit');
+        const costDisplay = document.getElementById('totalCostPerUnit');
+        
+        console.log('Margin calculator listeners initialized - v2.0');
+        
+        // When margin percentage changes, calculate selling price
+        marginInput.addEventListener('input', () => {
+            console.log('Margin input changed:', marginInput.value);
+            const marginPercentage = parseFloat(marginInput.value);
+            let costPerUnit = parseFloat(costDisplay.textContent.replace('$', ''));
+            
+            // If no cost calculation has been done, allow user to enter a manual cost
+            if (costPerUnit <= 0) {
+                const manualCost = prompt('Please enter the cost per unit (NZD) to calculate pricing:');
+                if (manualCost && !isNaN(parseFloat(manualCost))) {
+                    costPerUnit = parseFloat(manualCost);
+                    costDisplay.textContent = `$${costPerUnit.toFixed(2)}`;
+                } else {
+                    sellingPriceInput.value = '';
+                    profitDisplay.textContent = '$0.00';
+                    return;
+                }
+            }
+            
+            if (marginPercentage >= 0 && marginPercentage < 100 && costPerUnit > 0) {
+                const result = this.calculatePriceFromMargin(marginPercentage, costPerUnit);
+                if (result) {
+                    sellingPriceInput.value = result.sellingPrice.toFixed(2);
+                    profitDisplay.textContent = `$${result.profit.toFixed(2)}`;
+                    
+                    // Add visual feedback
+                    this.updateMarginVisualFeedback(marginPercentage, result.profit, costPerUnit);
+                }
+            } else {
+                if (marginPercentage >= 100) {
+                    alert('Margin percentage must be less than 100%');
+                }
+                sellingPriceInput.value = '';
+                profitDisplay.textContent = '$0.00';
+            }
+        });
+        
+        // When selling price changes, calculate margin percentage
+        sellingPriceInput.addEventListener('input', () => {
+            console.log('Selling price input changed:', sellingPriceInput.value);
+            const sellingPrice = parseFloat(sellingPriceInput.value);
+            let costPerUnit = parseFloat(costDisplay.textContent.replace('$', ''));
+            
+            // If no cost calculation has been done, allow user to enter a manual cost
+            if (costPerUnit <= 0) {
+                const manualCost = prompt('Please enter the cost per unit (NZD) to calculate margin:');
+                if (manualCost && !isNaN(parseFloat(manualCost))) {
+                    costPerUnit = parseFloat(manualCost);
+                    costDisplay.textContent = `$${costPerUnit.toFixed(2)}`;
+                } else {
+                    marginInput.value = '';
+                    profitDisplay.textContent = '$0.00';
+                    return;
+                }
+            }
+            
+            if (sellingPrice > 0 && costPerUnit > 0) {
+                const result = this.calculateMarginFromPrice(sellingPrice, costPerUnit);
+                if (result) {
+                    marginInput.value = result.marginPercentage.toFixed(2);
+                    profitDisplay.textContent = `$${result.profit.toFixed(2)}`;
+                    
+                    // Add visual feedback
+                    this.updateMarginVisualFeedback(result.marginPercentage, result.profit, costPerUnit);
+                }
+            } else {
+                marginInput.value = '';
+                profitDisplay.textContent = '$0.00';
+            }
+        });
+    }
+    
+    updateMarginVisualFeedback(marginPercentage, profit, costPerUnit) {
+        const profitDisplay = document.getElementById('profitPerUnit');
+        
+        // Remove existing classes
+        profitDisplay.classList.remove('profit-low', 'profit-good', 'profit-excellent');
+        
+        // Add appropriate class based on margin percentage
+        if (marginPercentage < 20) {
+            profitDisplay.classList.add('profit-low');
+        } else if (marginPercentage < 40) {
+            profitDisplay.classList.add('profit-good');
+        } else {
+            profitDisplay.classList.add('profit-excellent');
+        }
+    }
+
     updateMarginCalculator(costPerUnit) {
-        document.getElementById('totalCostPerUnit').value = costPerUnit.toFixed(2);
+        const costDisplay = document.getElementById('totalCostPerUnit');
+        costDisplay.textContent = `$${costPerUnit.toFixed(2)}`;
         
         // Clear previous calculations
         document.getElementById('marginPercentage').value = '';
         document.getElementById('sellingPrice').value = '';
-        document.getElementById('profitPerUnit').value = '';
-        // Note: breakEvenPrice and markupPercentage elements don't exist in HTML
-        // document.getElementById('breakEvenPrice').textContent = `$${costPerUnit.toFixed(2)} NZD`;
-        // document.getElementById('markupPercentage').textContent = '0.0%';
+        document.getElementById('profitPerUnit').textContent = '$0.00';
+        
+        // Remove visual feedback classes
+        document.getElementById('profitPerUnit').classList.remove('profit-low', 'profit-good', 'profit-excellent');
     }
 
     calculateMarginFromPrice(sellingPrice, costPerUnit) {
@@ -761,10 +880,13 @@ class ExportCostCalculator {
         }
         
         // Clear margin calculator
-        document.getElementById('totalCostPerUnit').value = '';
+        document.getElementById('totalCostPerUnit').textContent = '$0.00';
         document.getElementById('marginPercentage').value = '';
         document.getElementById('sellingPrice').value = '';
-        document.getElementById('profitPerUnit').value = '';
+        document.getElementById('profitPerUnit').textContent = '$0.00';
+        
+        // Remove visual feedback classes
+        document.getElementById('profitPerUnit').classList.remove('profit-low', 'profit-good', 'profit-excellent');
         
         // Clear last calculation results
         this.lastCalculationResults = null;
@@ -1128,3 +1250,21 @@ function updateScrollIndicator() {
 window.addEventListener('scroll', () => {
     updateScrollIndicator();
 });
+
+// Initialize the calculator when DOM is loaded
+console.log('DEBUG: About to initialize ExportCostCalculator');
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DEBUG: DOM loaded, creating ExportCostCalculator instance');
+    const calculator = new ExportCostCalculator();
+    console.log('DEBUG: ExportCostCalculator instance created successfully');
+    console.log('Export Cost Estimator loaded successfully');
+});
+
+// Fallback initialization if DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+    console.log('DEBUG: Document still loading, waiting for DOMContentLoaded');
+} else {
+    console.log('DEBUG: Document already loaded, initializing immediately');
+    const calculator = new ExportCostCalculator();
+    console.log('Export Cost Estimator loaded successfully');
+}
