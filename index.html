@@ -16,9 +16,45 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="calculation-status.css">
     
     <!-- Particles.js -->
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyBWAidXk54Dd7O_Ewj1v8cdtEhtEoxdLIc",
+            authDomain: "blue-lock-export-assistant.firebaseapp.com",
+            projectId: "blue-lock-export-assistant",
+            storageBucket: "blue-lock-export-assistant.firebasestorage.app",
+            messagingSenderId: "510648609164",
+            appId: "1:510648609164:web:0c2272b5ff8dc77295cea9",
+            measurementId: "G-T3JZRLZ415"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Make Firebase available globally
+        window.firebaseDB = db;
+        window.firebaseUtils = {
+            collection,
+            addDoc,
+            getDocs,
+            doc,
+            deleteDoc,
+            updateDoc,
+            query,
+            orderBy,
+            limit
+        };
+        
+        console.log('Firebase initialized successfully');
+    </script>
 </head>
 <body>
     <!-- Background Effects -->
@@ -130,12 +166,95 @@
                             </div>
                         </div>
                         
-                        <div class="input-group">
-                            <label class="modern-label" for="unitsPerContainer">
+                        <div class="input-group units-container-group">
+                            <label class="modern-label">
                                 <i class="fas fa-cubes"></i>
                                 Units per Container
                             </label>
-                            <input type="number" id="unitsPerContainer" class="modern-input" placeholder="Enter quantity">
+                            
+                            <!-- Input Method Toggle -->
+                            <div class="input-method-toggle">
+                                <input type="radio" id="directEntry" name="unitsInputMethod" value="direct" checked>
+                                <label for="directEntry" class="toggle-option">
+                                    <i class="fas fa-edit"></i>
+                                    Direct Entry
+                                </label>
+                                <input type="radio" id="cartonCalculation" name="unitsInputMethod" value="carton">
+                                <label for="cartonCalculation" class="toggle-option">
+                                    <i class="fas fa-calculator"></i>
+                                    Calculate from Cartons
+                                </label>
+                            </div>
+                            
+                            <!-- Direct Entry Method -->
+                            <div class="units-input-section" id="directEntrySection">
+                                <input type="number" id="unitsPerContainer" class="modern-input" placeholder="Enter total units">
+                            </div>
+                            
+                            <!-- Carton Calculation Method -->
+                            <div class="units-input-section" id="cartonCalculationSection" style="display: none;">
+                                <div class="carton-inputs">
+                                    <div class="input-row">
+                                        <div class="input-group">
+                                            <label class="modern-label" for="cartonSize">
+                                                <i class="fas fa-box"></i>
+                                                Carton Size
+                                            </label>
+                                            <select id="cartonSize" class="modern-select">
+                                                <option value="">Select carton size</option>
+                                                <option value="small">Small (30×20×15 cm)</option>
+                                                <option value="medium">Medium (40×30×20 cm)</option>
+                                                <option value="large">Large (50×40×30 cm)</option>
+                                                <option value="xlarge">Extra Large (60×50×40 cm)</option>
+                                                <option value="custom">Custom Size</option>
+                                            </select>
+                                        </div>
+                                        <div class="input-group">
+                                            <label class="modern-label" for="unitsPerCarton">
+                                                <i class="fas fa-layer-group"></i>
+                                                Units per Carton
+                                            </label>
+                                            <input type="number" id="unitsPerCarton" class="modern-input" placeholder="Units in each carton">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Custom Carton Dimensions (hidden by default) -->
+                                    <div class="custom-dimensions" id="customDimensions" style="display: none;">
+                                        <div class="input-row">
+                                            <div class="input-group">
+                                                <label class="modern-label" for="cartonLength">
+                                                    Length (cm)
+                                                </label>
+                                                <input type="number" id="cartonLength" class="modern-input" placeholder="Length">
+                                            </div>
+                                            <div class="input-group">
+                                                <label class="modern-label" for="cartonWidth">
+                                                    Width (cm)
+                                                </label>
+                                                <input type="number" id="cartonWidth" class="modern-input" placeholder="Width">
+                                            </div>
+                                            <div class="input-group">
+                                                <label class="modern-label" for="cartonHeight">
+                                                    Height (cm)
+                                                </label>
+                                                <input type="number" id="cartonHeight" class="modern-input" placeholder="Height">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Calculation Results -->
+                                    <div class="calculation-preview">
+                                        <div class="preview-item">
+                                            <span class="preview-label">Estimated Cartons per Container:</span>
+                                            <span class="preview-value" id="cartonsPerContainer">-</span>
+                                        </div>
+                                        <div class="preview-item">
+                                            <span class="preview-label">Total Units:</span>
+                                            <span class="preview-value" id="calculatedUnits">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -479,6 +598,13 @@
                         <h3 class="card-title">Actions</h3>
                     </div>
                     <div class="card-content">
+                        <!-- Calculation Status -->
+                        <div class="calculation-status" id="calculationStatus">
+                            <div class="status-indicator">
+                                <i class="fas fa-plus-circle"></i>
+                                <span id="statusText">New Calculation</span>
+                            </div>
+                        </div>
                         <div class="action-buttons">
                             <button class="primary-btn" id="calculateBtn">
                                 <i class="fas fa-calculator"></i>
@@ -488,7 +614,12 @@
                             <div class="button-row">
                                 <button class="secondary-btn" id="saveBtn">
                                     <i class="fas fa-save"></i>
-                                    <span>Save</span>
+                                    <span id="saveBtnText">Save</span>
+                                </button>
+                                
+                                <button class="secondary-btn" id="saveAsNewBtn" style="display: none;">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Save as New</span>
                                 </button>
                                 
                                 <button class="secondary-btn" id="loadBtn">

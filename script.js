@@ -11,12 +11,17 @@ class ExportCostCalculator {
             USD_TO_NZD: 1.6500
         };
         
+        // Track current calculation for save/update functionality
+        this.currentCalculationId = null;
+        this.currentCalculationData = null;
+        
         console.log('DEBUG: About to initialize event listeners');
         this.initializeEventListeners();
         console.log('DEBUG: Event listeners initialized');
         
         console.log('DEBUG: About to load default rates');
         this.loadDefaultRates();
+        this.updateCalculationStatus();
         console.log('DEBUG: Constructor completed');
     }
 
@@ -36,6 +41,10 @@ class ExportCostCalculator {
         // Auto-update container capacity when type changes
         document.getElementById('containerType').addEventListener('change', this.updateContainerInfo.bind(this));
         console.log('DEBUG: Container type listener added');
+        
+        // Initialize units per container dual input system
+        this.initializeUnitsInputSystem();
+        console.log('DEBUG: Units input system initialized');
         
         // Auto-recalculate when incoterms change
         document.querySelectorAll('input[name="incoterms"]').forEach(radio => {
@@ -66,6 +75,121 @@ class ExportCostCalculator {
         document.getElementById('usdToNzd').value = this.exchangeRates.USD_TO_NZD;
     }
 
+    initializeUnitsInputSystem() {
+        // Toggle between direct entry and carton calculation
+        const directEntryRadio = document.getElementById('directEntry');
+        const cartonCalculationRadio = document.getElementById('cartonCalculation');
+        const directEntrySection = document.getElementById('directEntrySection');
+        const cartonCalculationSection = document.getElementById('cartonCalculationSection');
+        
+        // Method toggle handlers
+        directEntryRadio.addEventListener('change', () => {
+            if (directEntryRadio.checked) {
+                directEntrySection.style.display = 'block';
+                cartonCalculationSection.style.display = 'none';
+            }
+        });
+        
+        cartonCalculationRadio.addEventListener('change', () => {
+            if (cartonCalculationRadio.checked) {
+                directEntrySection.style.display = 'none';
+                cartonCalculationSection.style.display = 'block';
+                this.calculateCartonCapacity();
+            }
+        });
+        
+        // Carton size change handler
+        document.getElementById('cartonSize').addEventListener('change', (e) => {
+            const customDimensions = document.getElementById('customDimensions');
+            if (e.target.value === 'custom') {
+                customDimensions.style.display = 'block';
+            } else {
+                customDimensions.style.display = 'none';
+            }
+            this.calculateCartonCapacity();
+        });
+        
+        // Input handlers for carton calculation
+        ['unitsPerCarton', 'cartonLength', 'cartonWidth', 'cartonHeight'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', () => {
+                    this.calculateCartonCapacity();
+                });
+            }
+        });
+        
+        // Container type change should also update carton calculations
+        document.getElementById('containerType').addEventListener('change', () => {
+            this.calculateCartonCapacity();
+        });
+    }
+    
+    calculateCartonCapacity() {
+        const cartonCalculationRadio = document.getElementById('cartonCalculation');
+        if (!cartonCalculationRadio.checked) return;
+        
+        const containerType = document.getElementById('containerType').value;
+        const cartonSize = document.getElementById('cartonSize').value;
+        const unitsPerCarton = parseFloat(document.getElementById('unitsPerCarton').value) || 0;
+        
+        // Container volumes in cubic meters
+        const containerVolumes = {
+            '20ft': 33,
+            '40ft': 67,
+            '40ft-hc': 76,
+            'lcl': 10 // Assume 10 CBM for LCL calculation
+        };
+        
+        // Predefined carton dimensions in cm (converted to cubic meters)
+        const cartonDimensions = {
+            'small': { length: 30, width: 20, height: 15 },
+            'medium': { length: 40, width: 30, height: 20 },
+            'large': { length: 50, width: 40, height: 30 },
+            'xlarge': { length: 60, width: 50, height: 40 }
+        };
+        
+        let cartonVolume = 0;
+        
+        if (cartonSize === 'custom') {
+            const length = parseFloat(document.getElementById('cartonLength').value) || 0;
+            const width = parseFloat(document.getElementById('cartonWidth').value) || 0;
+            const height = parseFloat(document.getElementById('cartonHeight').value) || 0;
+            cartonVolume = (length * width * height) / 1000000; // Convert cm³ to m³
+        } else if (cartonDimensions[cartonSize]) {
+            const dims = cartonDimensions[cartonSize];
+            cartonVolume = (dims.length * dims.width * dims.height) / 1000000; // Convert cm³ to m³
+        }
+        
+        const containerVolume = containerVolumes[containerType] || 0;
+        
+        if (cartonVolume > 0 && containerVolume > 0) {
+            // Calculate with 85% efficiency factor for packing
+            const packingEfficiency = 0.85;
+            const cartonsPerContainer = Math.floor((containerVolume * packingEfficiency) / cartonVolume);
+            const totalUnits = cartonsPerContainer * unitsPerCarton;
+            
+            // Update display
+            document.getElementById('cartonsPerContainer').textContent = cartonsPerContainer.toLocaleString();
+            document.getElementById('calculatedUnits').textContent = totalUnits.toLocaleString();
+            document.getElementById('calculatedUnits').classList.add('calculated');
+            
+            // Update the main units per container field
+            document.getElementById('unitsPerContainer').value = totalUnits;
+            
+            // Trigger calculation if other required fields are filled
+            const unitPrice = parseFloat(document.getElementById('unitPrice').value);
+            if (unitPrice > 0 && totalUnits > 0) {
+                this.calculateCosts();
+            }
+        } else {
+            // Reset display
+            document.getElementById('cartonsPerContainer').textContent = '-';
+            document.getElementById('calculatedUnits').textContent = '-';
+            document.getElementById('calculatedUnits').classList.remove('calculated');
+        }
+    }
+
     updateContainerInfo() {
         const containerType = document.getElementById('containerType').value;
         const containerSpecs = {
@@ -79,7 +203,7 @@ class ExportCostCalculator {
                 maxWeight: '26,500 kg',
                 dimensions: '12.03m × 2.35m × 2.39m'
             },
-            '40ft-hq': {
+            '40ft-hc': {
                 capacity: '68-76 CBM',
                 maxWeight: '26,500 kg',
                 dimensions: '12.03m × 2.35m × 2.69m'
@@ -634,11 +758,11 @@ class ExportCostCalculator {
         };
     }
 
-    saveCalculation(results) {
+    async saveCalculation(results) {
         const data = results.data;
         const calculation = {
-            id: Date.now().toString(),
-            timestamp: new Date().toISOString(),
+            timestamp: this.currentCalculationId ? this.currentCalculationData.timestamp : new Date().toISOString(),
+            lastModified: new Date().toISOString(),
             productName: data.productName,
             category: data.category,
             unitPrice: data.unitPrice,
@@ -651,37 +775,131 @@ class ExportCostCalculator {
             formData: data // Store all form data for loading
         };
         
-        let savedCalculations = JSON.parse(localStorage.getItem('exportCalculations') || '[]');
-        savedCalculations.unshift(calculation); // Add to beginning
-        
-        // Keep only last 50 calculations
-        if (savedCalculations.length > 50) {
-            savedCalculations = savedCalculations.slice(0, 50);
+        try {
+            let docId;
+            
+            if (this.currentCalculationId) {
+                // Update existing calculation
+                await window.firebaseUtils.updateDoc(
+                    window.firebaseUtils.doc(window.firebaseDB, 'exportCalculations', this.currentCalculationId),
+                    calculation
+                );
+                docId = this.currentCalculationId;
+                console.log('Calculation updated in Firebase with ID:', docId);
+                alert('Calculation updated successfully!');
+            } else {
+                // Create new calculation
+                const docRef = await window.firebaseUtils.addDoc(
+                    window.firebaseUtils.collection(window.firebaseDB, 'exportCalculations'),
+                    calculation
+                );
+                docId = docRef.id;
+                this.currentCalculationId = docId;
+                this.currentCalculationData = { ...calculation, id: docId };
+                console.log('New calculation saved to Firebase with ID:', docId);
+                alert('Calculation saved successfully!');
+                this.updateCalculationStatus();
+            }
+            
+            await this.updateCategoryFilter();
+            return docId;
+        } catch (error) {
+            console.error('Error saving to Firebase:', error);
+            // Fallback to localStorage if Firebase fails
+            let savedCalculations = JSON.parse(localStorage.getItem('exportCalculations') || '[]');
+            
+            if (this.currentCalculationId) {
+                // Update existing in localStorage
+                const index = savedCalculations.findIndex(calc => calc.id === this.currentCalculationId);
+                if (index !== -1) {
+                    savedCalculations[index] = { ...calculation, id: this.currentCalculationId };
+                    localStorage.setItem('exportCalculations', JSON.stringify(savedCalculations));
+                    alert('Calculation updated locally (Firebase unavailable)');
+                }
+            } else {
+                // Create new in localStorage
+                const localCalculation = {
+                    id: Date.now().toString(),
+                    ...calculation
+                };
+                
+                savedCalculations.unshift(localCalculation);
+                
+                if (savedCalculations.length > 50) {
+                    savedCalculations = savedCalculations.slice(0, 50);
+                }
+                
+                localStorage.setItem('exportCalculations', JSON.stringify(savedCalculations));
+                this.currentCalculationId = localCalculation.id;
+                this.currentCalculationData = localCalculation;
+                alert('Saved locally (Firebase unavailable)');
+                this.updateCalculationStatus();
+            }
+            
+            await this.updateCategoryFilter();
+            return this.currentCalculationId;
         }
-        
-        localStorage.setItem('exportCalculations', JSON.stringify(savedCalculations));
-        this.updateCategoryFilter();
-        
-        return calculation.id;
     }
 
-    loadSavedCalculations() {
-        return JSON.parse(localStorage.getItem('exportCalculations') || '[]');
+    async loadSavedCalculations() {
+        try {
+            // Load from Firebase Firestore
+            const q = window.firebaseUtils.query(
+                window.firebaseUtils.collection(window.firebaseDB, 'exportCalculations'),
+                window.firebaseUtils.orderBy('timestamp', 'desc'),
+                window.firebaseUtils.limit(50)
+            );
+            
+            const querySnapshot = await window.firebaseUtils.getDocs(q);
+            const savedCalculations = [];
+            
+            querySnapshot.forEach((doc) => {
+                savedCalculations.push({
+                    id: doc.id,
+                    ...doc.data()
+                });
+            });
+            
+            return savedCalculations;
+        } catch (error) {
+            console.error('Error loading from Firebase:', error);
+            // Fallback to localStorage
+            return JSON.parse(localStorage.getItem('exportCalculations') || '[]');
+        }
     }
 
-    deleteCalculation(id) {
-        let savedCalculations = this.loadSavedCalculations();
-        savedCalculations = savedCalculations.filter(calc => calc.id !== id);
-        localStorage.setItem('exportCalculations', JSON.stringify(savedCalculations));
-        this.displaySavedCalculations();
-        this.updateCategoryFilter();
+    async deleteCalculation(id) {
+        try {
+            // Delete from Firebase Firestore
+            await window.firebaseUtils.deleteDoc(
+                window.firebaseUtils.doc(window.firebaseDB, 'exportCalculations', id)
+            );
+            
+            console.log('Calculation deleted from Firebase:', id);
+            await this.displaySavedCalculations();
+            await this.updateCategoryFilter();
+        } catch (error) {
+            console.error('Error deleting from Firebase:', error);
+            // Fallback to localStorage
+            let savedCalculations = JSON.parse(localStorage.getItem('exportCalculations') || '[]');
+            savedCalculations = savedCalculations.filter(calc => calc.id !== id);
+            localStorage.setItem('exportCalculations', JSON.stringify(savedCalculations));
+            await this.displaySavedCalculations();
+            await this.updateCategoryFilter();
+            alert('Deleted locally (Firebase unavailable)');
+        }
     }
 
-    loadCalculation(id) {
-        const savedCalculations = this.loadSavedCalculations();
+    async loadCalculation(id) {
+        const savedCalculations = await this.loadSavedCalculations();
         const calculation = savedCalculations.find(calc => calc.id === id);
         
         if (!calculation) return;
+        
+        // Set current calculation tracking
+        this.currentCalculationId = id;
+        this.currentCalculationData = calculation;
+        this.updateCalculationStatus();
         
         const data = calculation.formData;
         
@@ -725,10 +943,13 @@ class ExportCostCalculator {
         
         // Recalculate
         this.calculateCosts();
+        
+        // Show success message
+        alert(`Loaded calculation: ${calculation.productName}`);
     }
 
-    updateCategoryFilter() {
-        const savedCalculations = this.loadSavedCalculations();
+    async updateCategoryFilter() {
+        const savedCalculations = await this.loadSavedCalculations();
         const categories = [...new Set(savedCalculations.map(calc => calc.category))].sort();
         
         const filterSelect = document.getElementById('categoryFilter');
@@ -751,8 +972,8 @@ class ExportCostCalculator {
         }
     }
 
-    displaySavedCalculations(filterCategory = '') {
-        const savedCalculations = this.loadSavedCalculations();
+    async displaySavedCalculations(filterCategory = '') {
+        const savedCalculations = await this.loadSavedCalculations();
         const filteredCalculations = filterCategory 
             ? savedCalculations.filter(calc => calc.category === filterCategory)
             : savedCalculations;
@@ -825,11 +1046,11 @@ class ExportCostCalculator {
                     </div>
                     
                     <div class="calc-actions">
-                        <button class="btn-load" onclick="calculator.loadCalculation('${calc.id}'); document.getElementById('savedCalculationsCard').style.display = 'none';">
+                        <button class="btn-load" onclick="(async () => { await calculator.loadCalculation('${calc.id}'); document.getElementById('savedCalculationsCard').style.display = 'none'; })();">
                             <i class="fas fa-upload"></i>
                             Load
                         </button>
-                        <button class="btn-delete" onclick="calculator.deleteCalculation('${calc.id}')">
+                        <button class="btn-delete" onclick="(async () => { await calculator.deleteCalculation('${calc.id}'); })();">
                             <i class="fas fa-trash"></i>
                             Delete
                         </button>
@@ -891,7 +1112,50 @@ class ExportCostCalculator {
         // Clear last calculation results
         this.lastCalculationResults = null;
         
+        // Reset calculation tracking
+        this.currentCalculationId = null;
+        this.currentCalculationData = null;
+        this.updateCalculationStatus();
+        
         console.log('Form cleared successfully');
+    }
+
+    updateCalculationStatus() {
+        const statusElement = document.getElementById('statusText');
+        const statusIcon = document.querySelector('.status-indicator i');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveAsNewBtn = document.getElementById('saveAsNewBtn');
+        
+        if (this.currentCalculationId && this.currentCalculationData) {
+            // Editing mode
+            statusElement.textContent = `Editing: ${this.currentCalculationData.productName}`;
+            statusIcon.className = 'fas fa-edit';
+            saveBtnText.textContent = 'Update';
+            saveAsNewBtn.style.display = 'inline-flex';
+        } else {
+            // New calculation mode
+            statusElement.textContent = 'New Calculation';
+            statusIcon.className = 'fas fa-plus-circle';
+            saveBtnText.textContent = 'Save';
+            saveAsNewBtn.style.display = 'none';
+        }
+    }
+
+    async saveAsNew(results) {
+        // Temporarily clear current calculation tracking
+        const tempId = this.currentCalculationId;
+        const tempData = this.currentCalculationData;
+        
+        this.currentCalculationId = null;
+        this.currentCalculationData = null;
+        
+        // Save as new calculation
+        const newId = await this.saveCalculation(results);
+        
+        // Update status to show we're now editing the new calculation
+        this.updateCalculationStatus();
+        
+        return newId;
     }
 
     exportData() {
@@ -977,19 +1241,21 @@ function showSavedCalculations() {
         // Ensure calculator is initialized before using it
         if (typeof calculator !== 'undefined') {
             try {
-                calculator.updateCategoryFilter();
-                calculator.displaySavedCalculations();
-                card.style.display = 'block';
-                card.classList.add('show');
-                
-                // Smooth scroll with delay to ensure element is visible
-                setTimeout(() => {
-                    card.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start',
-                        inline: 'nearest'
-                    });
-                }, 100);
+                (async () => {
+                    await calculator.updateCategoryFilter();
+                    await calculator.displaySavedCalculations();
+                    card.style.display = 'block';
+                    card.classList.add('show');
+                    
+                    // Smooth scroll with delay to ensure element is visible
+                    setTimeout(() => {
+                        card.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start',
+                            inline: 'nearest'
+                        });
+                    }, 100);
+                })();
             } catch (error) {
                 console.error('Error showing saved calculations:', error);
             }
@@ -1005,7 +1271,9 @@ function filterCalculations() {
     if (typeof calculator !== 'undefined') {
         try {
             const filterCategory = document.getElementById('categoryFilter').value;
-            calculator.displaySavedCalculations(filterCategory);
+            (async () => {
+                await calculator.displaySavedCalculations(filterCategory);
+            })();
         } catch (error) {
             console.error('Error filtering calculations:', error);
         }
@@ -1051,7 +1319,7 @@ function calculateCosts() {
 }
 
 // Global functions for save/load functionality
-function saveCalculation() {
+async function saveCalculation() {
     if (!calculator.lastCalculationResults) {
         alert('Please calculate costs first before saving.');
         return;
@@ -1065,8 +1333,12 @@ function saveCalculation() {
         return;
     }
     
-    const calculationId = calculator.saveCalculation(calculator.lastCalculationResults);
-    alert(`Calculation saved successfully for "${productName}" in category "${category}"!`);
+    try {
+        const calculationId = await calculator.saveCalculation(calculator.lastCalculationResults);
+    } catch (error) {
+        console.error('Error saving calculation:', error);
+        alert('Error saving calculation. Please try again.');
+    }
 }
 
 // Auto-fetch exchange rates on page load (optional enhancement)
@@ -1074,6 +1346,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up action button event listeners
     const calculateBtn = document.getElementById('calculateBtn');
     const saveBtn = document.getElementById('saveBtn');
+    const saveAsNewBtn = document.getElementById('saveAsNewBtn');
     const loadBtn = document.getElementById('loadBtn');
     const clearBtn = document.getElementById('clearBtn');
     const exportBtn = document.getElementById('exportBtn');
@@ -1087,6 +1360,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             saveCalculation();
+        });
+    }
+    
+    if (saveAsNewBtn) {
+        saveAsNewBtn.addEventListener('click', async () => {
+            if (!calculator.lastCalculationResults) {
+                alert('Please calculate costs first before saving.');
+                return;
+            }
+            
+            const productName = calculator.lastCalculationResults.data.productName;
+            const category = calculator.lastCalculationResults.data.category;
+            
+            if (!productName || productName === 'Unnamed Product') {
+                alert('Please enter a product name before saving.');
+                return;
+            }
+            
+            try {
+                const calculationId = await calculator.saveAsNew(calculator.lastCalculationResults);
+                alert(`New calculation saved successfully for "${productName}" in category "${category}"!`);
+            } catch (error) {
+                console.error('Error saving new calculation:', error);
+                alert('Error saving new calculation. Please try again.');
+            }
         });
     }
     
